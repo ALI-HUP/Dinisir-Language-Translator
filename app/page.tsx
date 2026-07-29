@@ -1,76 +1,92 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Sparkles,
-  Volume2,
-  ArrowLeftRight,
   Copy,
   Check,
   RefreshCw,
-  Zap,
-  ShieldAlert,
-  Flame,
   Info,
+  Lightbulb,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
+import StarBurst from "@/components/StarBurst";
 
-// DINO SPECIES & PRESETS
-const DINO_SPECIES = [
-  {
-    id: "trex",
-    name: "تی‌رکس (T-Rex)",
-    icon: "🦖",
-    tag: "خشن و قدرتمند",
-    sound: "ROAARRR!",
-  },
-  {
-    id: "raptor",
-    name: "ولاسیرپتور (Velociraptor)",
-    icon: "🐊",
-    tag: "سریع و هوشمند",
-    sound: "Sreeeech!",
-  },
-  {
-    id: "brachio",
-    name: "براکیوسور (Brachiosaurus)",
-    icon: "🦕",
-    tag: "آرام و بزرگ",
-    sound: "Hooouuuum!",
-  },
-  {
-    id: "tricera",
-    name: "تری‌سراتوپس (Triceratops)",
-    icon: "🦏",
-    tag: "سرسخت و مدافع",
-    sound: "Grunt-Grunt!",
-  },
+const SUGGESTED_TEXTS = [
+  "سلام چطوری خوبی؟ چه خبر؟",
+  "سلام رئیس، پروژه تموم شده و آماده تحویله!",
+  "دلم برات تنگ شده بود، کی میای همدیگه رو ببینیم؟",
+  "من عقده‌ام کثافت؟؟؟",
+  "امروز رفتم مغازه خرید کنم، فروشنده گفت جنسا گرون شده!",
+  "خواهیم دید چه خواهد شد!!",
+  "جات خالی رفتیم شمال، هوا عالی بود و کلی خوش گذشت.",
+  "بخشش لازم نیست، اعدامش کنید!",
+  "اون ممه رو لولو برد...",
+];
+
+const ENGLISH_WARNINGS = [
+  "دیگه چی؟ میخوای برات انگلیسی هم ترجمه کنم؟ فارسی بنویس بینیم بابا!",
+  "یعنی مثلا خیلی خفنی انگلیسی مینویسی؟ فارسی بنویس ما هم بفهمیم چی میگی متمدن!",
+  "اون موقع که ما زبونمونو ساختیم انگلیسی نبود... بیا پایین قوربه سگ!",
+  "جون بابا اینگیلیش! فارسی بنال...",
+  "هه، سیشتیر!! فارسی پلیز لطفا...",
 ];
 
 export default function DinoTranslatorPage() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<"humanToDino" | "dinoToHuman">(
-    "humanToDino",
-  );
-  const [selectedSpecies, setSelectedSpecies] = useState("trex");
   const [isCopied, setIsCopied] = useState(false);
-  const [history, setHistory] = useState<
-    { source: string; result: string; mode: string }[]
-  >([]);
+  const [history, setHistory] = useState<{ source: string; result: string }[]>(
+    [],
+  );
 
-  // Sound effect simulation
-  const handlePlaySound = (text: string) => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text || "Roar!");
-      utterance.pitch = selectedSpecies === "brachio" ? 0.3 : 0.6;
-      utterance.rate = 0.8;
-      window.speechSynthesis.speak(utterance);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isLoading) {
+      setLoadingStep(0);
+      return;
     }
+    const interval = setInterval(() => {
+      setLoadingStep((prev) => (prev === 0 ? 1 : 0));
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    const hasEnglish = /[a-zA-Z]/.test(text);
+
+    if (hasEnglish) {
+      const randomWarning =
+        ENGLISH_WARNINGS[Math.floor(Math.random() * ENGLISH_WARNINGS.length)];
+      setWarningMessage(randomWarning);
+      return;
+    }
+
+    setInputText(text);
   };
 
-  const handleTranslate = async () => {
-    if (!inputText.trim()) return;
+  const handleCloseModal = () => {
+    setWarningMessage(null);
+    setInputText("");
+    setTranslatedText("");
+  };
+
+  const handleTranslate = async (textToTranslate?: string) => {
+    const text = textToTranslate || inputText;
+    if (!text.trim()) return;
+
+    if (/[a-zA-Z]/.test(text)) {
+      const randomWarning =
+        ENGLISH_WARNINGS[Math.floor(Math.random() * ENGLISH_WARNINGS.length)];
+      setWarningMessage(randomWarning);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -78,9 +94,8 @@ export default function DinoTranslatorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: inputText,
-          mode: mode,
-          species: selectedSpecies,
+          text: text,
+          mode: "humanToDino",
         }),
       });
 
@@ -88,22 +103,23 @@ export default function DinoTranslatorPage() {
       if (data.result) {
         setTranslatedText(data.result);
         setHistory((prev) => [
-          { source: inputText, result: data.result, mode },
+          { source: text, result: data.result },
           ...prev.slice(0, 4),
         ]);
       } else {
-        setTranslatedText(
-          "غش کردیم! متأسفانه دایناسورها پیام رو متوجه نشدن. دوباره تلاش کن.",
-        );
+        setTranslatedText("خطا در ترجمه! دوباره تلاش کن.");
       }
     } catch (error) {
       console.error(error);
-      setTranslatedText(
-        "خطا در ارتباط با دنیای ژوراسیک! کلید API را بررسی کنید.",
-      );
+      setTranslatedText("خطا در ارتباط با سرور.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSelectSuggested = (text: string) => {
+    setInputText(text);
+    handleTranslate(text);
   };
 
   const handleCopy = () => {
@@ -113,146 +129,95 @@ export default function DinoTranslatorPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleSwapMode = () => {
-    setMode((prev) => (prev === "humanToDino" ? "dinoToHuman" : "humanToDino"));
-    setInputText(translatedText);
-    setTranslatedText(inputText);
-  };
-
   return (
     <div
-      className="min-h-screen bg-slate-950 text-slate-100 font-sans dir-rtl flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950"
+      className="min-h-screen bg-slate-900 text-white font-sans flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-950 relative overflow-hidden"
       dir="rtl"
     >
-      {/* BACKGROUND GLOW DECORATIONS */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <StarBurst
+          color="#22d3ee"
+          starCount={2000}
+          speed={10}
+          opacity={40}
+          centerX={50}
+          centerY={30}
+        />
+      </div>
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 -right-40 w-96 h-96 bg-amber-600/15 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-teal-600/15 rounded-full blur-3xl"></div>
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/2 -right-40 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      {/* HEADER */}
-      <header className="relative z-10 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-4 py-4 md:px-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-2xl shadow-lg shadow-emerald-950/50 border border-emerald-400/30">
+      <header className="relative z-10 border-b border-blue-500/30 bg-slate-800/90 backdrop-blur-md px-4 py-3 md:py-4 md:px-8 shadow-md">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-2xl bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl md:text-2xl shadow-lg shadow-blue-900/40 border border-cyan-300/40 hover:rotate-12 transition-transform duration-300">
               🦖
             </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-emerald-400 via-teal-200 to-amber-300 bg-clip-text text-transparent">
-                مترجم ژوراسیک (DinoTalk)
+            <div className="min-w-0">
+              <h1 className="text-lg md:text-2xl font-black tracking-tight bg-linear-to-r from-white via-sky-200 to-cyan-300 bg-clip-text text-transparent truncate">
+                مترجم دینیسیر
               </h1>
-              <p className="text-xs text-slate-400">
-                ترجمه هوشمند به زبان دایناسورها با هوش مصنوعی Gemini
+              <p className="text-xs md:text-sm text-cyan-100/90 font-medium leading-tight">
+                تبدیل هوشمند زبان آدمیزاد به دایناسور بدون فک 🦖
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700/60 text-xs text-slate-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Gemini 2.5 Flash</span>
+          <div className="self-end sm:self-auto flex items-center gap-2 bg-blue-900/60 px-3 py-1 md:px-3.5 md:py-1.5 rounded-full border border-cyan-400/40 text-[11px] md:text-xs font-semibold text-cyan-200 shrink-0 shadow-sm">
+            <span className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-cyan-300 animate-pulse"></span>
+            <span>Gemini Powered</span>
           </div>
         </div>
       </header>
 
-      {/* MAIN CONTAINER */}
-      <main className="relative z-10 max-w-5xl mx-auto w-full px-4 py-6 md:py-10 flex-grow flex flex-col gap-6">
-        {/* SPECIES SELECTION TABS */}
-        <div className="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 backdrop-blur-sm">
-          <div className="text-xs text-slate-400 mb-2 font-medium px-1 flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            انتخاب گونه دایناسور:
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {DINO_SPECIES.map((species) => (
-              <button
-                key={species.id}
-                onClick={() => setSelectedSpecies(species.id)}
-                className={`flex items-center gap-2.5 p-2.5 rounded-xl text-right transition-all duration-200 ${
-                  selectedSpecies === species.id
-                    ? "bg-emerald-600/20 border-emerald-500/60 text-emerald-300 shadow-md border"
-                    : "bg-slate-800/40 border-transparent text-slate-400 hover:bg-slate-800/80 hover:text-slate-200 border"
-                }`}
-              >
-                <span className="text-2xl">{species.icon}</span>
-                <div className="overflow-hidden">
-                  <div className="text-xs font-bold truncate">
-                    {species.name}
-                  </div>
-                  <div className="text-[10px] text-slate-400 truncate">
-                    {species.tag}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* MODE SWITCHER & TRANSLATOR BOX */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 md:p-6 shadow-2xl backdrop-blur-xl relative">
-          {/* CONTROL BAR */}
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-200">
-                {mode === "humanToDino"
-                  ? "زبان انسان ➔ زبان دایناسور"
-                  : "زبان دایناسور ➔ زبان انسان"}
-              </span>
-            </div>
-
-            <button
-              onClick={handleSwapMode}
-              className="flex items-center gap-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-emerald-400 px-3 py-1.5 rounded-xl transition border border-slate-700/80 active:scale-95"
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>تغییر جهت ترجمه</span>
-            </button>
-          </div>
-
-          {/* TWO-COLUMN TRANSLATOR CARDS */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* INPUT CARD */}
-            <div className="flex flex-col bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 focus-within:border-emerald-500/50 transition">
-              <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span>
-                  {mode === "humanToDino"
-                    ? "متن ورودی (فارسی / انگلیسی)"
-                    : "متن ورودی دایناسوری (غرش/ناله)"}
+      <main className="relative z-10 max-w-4xl mx-auto w-full px-4 py-6 md:py-8 grow flex flex-col gap-6">
+        <div className="bg-slate-800/70 border border-sky-500/30 rounded-3xl p-5 md:p-7 shadow-xl backdrop-blur-xl transition-all duration-300 hover:border-sky-500/50">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/30 transition-all duration-300">
+              <div className="flex items-center justify-between text-sm text-cyan-200 mb-3 font-bold">
+                <span>متن آدمیزادی بینیویس</span>
+                <span className="bg-blue-900/80 text-cyan-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-cyan-400/40 transition-transform active:scale-95">
+                  {inputText.length} کاراکتر
                 </span>
-                <span>{inputText.length} کاراکتر</span>
               </div>
 
               <textarea
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder={
-                  mode === "humanToDino"
-                    ? "سلام، امروز چه خبر؟ می‌خوای با هم شکار بریم؟"
-                    : "ROAAR! Grrr... Raaaawr rawr GRRRR!"
-                }
-                className="w-full h-36 md:h-44 bg-transparent text-slate-100 placeholder-slate-600 focus:outline-none resize-none text-base leading-relaxed"
+                onChange={handleInputChange}
+                placeholder="متنت رو اینجا بنویس تا به دینیسیری تبدیلش کنیم..."
+                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-lg md:text-xl leading-relaxed font-medium"
               />
 
-              <div className="flex justify-between items-center pt-2 border-t border-slate-800/40">
+              <div className="flex justify-between items-center pt-3 border-t border-blue-800/60 mt-auto">
+                {inputText && (
+                  <button
+                    onClick={() => {
+                      setInputText("");
+                      setTranslatedText("");
+                    }}
+                    className="text-sm text-slate-300 hover:text-rose-400 transition flex items-center gap-1 font-semibold cursor-pointer active:scale-90"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>پاک کردن</span>
+                  </button>
+                )}
                 <button
-                  onClick={() => setInputText("")}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition"
-                >
-                  پاک کردن
-                </button>
-                <button
-                  onClick={handleTranslate}
+                  onClick={() => handleTranslate()}
                   disabled={isLoading || !inputText.trim()}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-50 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-950/50 transition active:scale-95"
+                  className={`mr-auto flex items-center gap-1.5 md:gap-2 bg-linear-to-r from-blue-500 to-cyan-400 hover:from-blue-400 hover:to-cyan-300 disabled:opacity-40 text-slate-950 font-black px-4 py-2.5 md:px-6 md:py-3 rounded-xl shadow-lg shadow-blue-900/50 transition duration-300 active:scale-95 text-sm md:text-base cursor-pointer ${
+                    inputText.trim() && !isLoading ? "animate-pulse" : ""
+                  }`}
                 >
                   {isLoading ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>در حال غرش...</span>
+                      <RefreshCw className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                      <span>در حال تبدیل...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
                       <span>ترجمه کن</span>
                     </>
                   )}
@@ -260,84 +225,93 @@ export default function DinoTranslatorPage() {
               </div>
             </div>
 
-            {/* OUTPUT CARD */}
-            <div className="flex flex-col bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden">
-              <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span className="flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  نتیجه ترجمه:
+            <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 relative overflow-hidden">
+              <div className="flex items-center justify-between text-sm mb-3">
+                <span className="font-bold text-cyan-300 text-base">
+                  خروجی دینیسیری
                 </span>
                 {translatedText && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handlePlaySound(translatedText)}
-                      className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition"
-                      title="پخش صدا"
-                    >
-                      <Volume2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={handleCopy}
-                      className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition"
-                      title="کپی نتیجه"
-                    >
-                      {isCopied ? (
-                        <Check className="w-4 h-4 text-emerald-400" />
-                      ) : (
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-3 py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90"
+                    title="کپی متن"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-4 h-4 text-cyan-300 animate-bounce" />
+                        <span className="text-cyan-300">کپی شد! خب بعدش؟</span>
+                      </>
+                    ) : (
+                      <>
                         <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
+                        <span>کپی</span>
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
 
-              <div className="w-full h-36 md:h-44 overflow-y-auto text-emerald-300 text-lg font-medium leading-relaxed dir-rtl whitespace-pre-wrap">
+              <div className="w-full h-40 md:h-48 overflow-y-auto text-cyan-200 text-xl md:text-2xl font-bold leading-relaxed whitespace-pre-wrap">
                 {isLoading ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2">
-                    <div className="text-3xl animate-bounce">🦖</div>
-                    <span className="text-xs">
-                      در حال پردازش آواهای عصر ژوراسیک...
+                  <div className="h-full flex flex-col items-center justify-center text-cyan-200 gap-3 transition-all duration-300">
+                    <div className="text-4xl animate-bounce">🦖</div>
+                    <span className="text-sm font-semibold animate-pulse">
+                      {loadingStep === 0
+                        ? "در حال پردازش آواهای عصر ژوراسیک..."
+                        : "در حال تبدیل به زبان دینیسیری..."}
                     </span>
                   </div>
                 ) : translatedText ? (
-                  translatedText
+                  <span className="inline-block animate-fade-in">
+                    {translatedText}
+                  </span>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-slate-600 text-sm italic">
-                    ترجمه اینجا نمایش داده می‌شود...
+                  <div className="h-full flex items-center justify-center text-slate-400 text-base italic font-normal">
+                    نتیجه ترجمه اینجا نشون داده میشه...
                   </div>
                 )}
-              </div>
-
-              {/* FOOTER BADGE */}
-              <div className="pt-2 border-t border-slate-800/40 text-[11px] text-slate-500 flex justify-between items-center">
-                <span>
-                  زبان خروجی:{" "}
-                  {mode === "humanToDino" ? "دیپ دینو (Dino-A)" : "فارسی روان"}
-                </span>
-                <span>پاسخ‌دهی آنی</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* RECENT TRANSLATIONS HISTORY */}
+        <div className="bg-slate-800/70 p-5 rounded-2xl border border-sky-500/30 backdrop-blur-sm shadow-md">
+          <div className="text-sm text-cyan-300 mb-3 font-bold flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-cyan-300 animate-pulse" />
+            متن‌های پیشنهادی (برای تست کلیک کن)
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            {SUGGESTED_TEXTS.map((text, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSelectSuggested(text)}
+                className="text-sm bg-slate-900/90 hover:bg-blue-600/80 hover:border-cyan-300 hover:text-white hover:-translate-y-0.5 text-slate-100 px-4 py-2.5 rounded-xl border border-blue-700/50 transition duration-200 font-semibold active:scale-95 text-right cursor-pointer shadow-sm"
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {history.length > 0 && (
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
-            <h3 className="text-xs font-bold text-slate-400 mb-3 flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-teal-400" />
+          <div className="bg-slate-800/60 border border-sky-500/30 rounded-2xl p-5 shadow-sm transition-all duration-300">
+            <h3 className="text-sm font-bold text-cyan-200 mb-3 flex items-center gap-2">
+              <Info className="w-4 h-4 text-cyan-300" />
               تاریخچه ترجمه‌های اخیر:
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {history.map((item, idx) => (
                 <div
                   key={idx}
-                  className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/40 text-xs flex justify-between items-center gap-4"
+                  className="bg-slate-900/80 p-3 rounded-xl border border-blue-700/50 text-sm md:text-base flex justify-between items-center gap-4 hover:border-cyan-500/40 transition duration-200"
                 >
-                  <span className="text-slate-400 truncate max-w-[40%]">
+                  <span className="text-white truncate max-w-[45%] font-medium">
                     {item.source}
                   </span>
-                  <span className="text-slate-600">➔</span>
-                  <span className="text-emerald-400 font-medium truncate max-w-[40%]">
+                  <span className="text-cyan-400 font-black animate-pulse">
+                    ➔
+                  </span>
+                  <span className="text-cyan-200 font-bold truncate max-w-[45%]">
                     {item.result}
                   </span>
                 </div>
@@ -347,12 +321,35 @@ export default function DinoTranslatorPage() {
         )}
       </main>
 
-      {/* FOOTER */}
-      <footer className="relative z-10 border-t border-slate-800/80 bg-slate-950/80 py-4 text-center text-xs text-slate-500">
-        <p>
-          توسعه‌یافته با Next.js, Tailwind CSS و Gemini API | دپلوی‌شده روی
-          Vercel
-        </p>
+      {warningMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-slate-800 border-2 border-rose-500/60 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center gap-5 transition-transform duration-300 scale-100 animate-in zoom-in-95">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-3xl shadow-lg animate-bounce">
+              🦖
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 text-rose-400 font-bold text-lg">
+                <AlertTriangle className="w-5 h-5 animate-pulse" />
+                <span>انگلیسی تایپ کردی؟</span>
+              </div>
+              <p className="text-white text-base md:text-lg font-bold leading-relaxed pt-2">
+                {warningMessage}
+              </p>
+            </div>
+
+            <button
+              onClick={handleCloseModal}
+              className="w-full bg-linear-to-r from-rose-500 to-amber-500 hover:from-rose-400 hover:to-amber-400 hover:shadow-rose-500/20 hover:shadow-xl text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg transition duration-200 active:scale-95 text-sm md:text-base cursor-pointer"
+            >
+              بنده متوجه اشتباهم شده و عذرخواهم
+            </button>
+          </div>
+        </div>
+      )}
+
+      <footer className="relative z-10 border-t border-blue-500/30 bg-slate-900/90 py-4 text-center text-xs text-cyan-200/70 font-medium">
+        <p>طراحی‌شده با Next.js & Tailwind CSS | دپلوی روی Vercel</p>
       </footer>
     </div>
   );
