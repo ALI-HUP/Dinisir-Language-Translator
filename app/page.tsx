@@ -60,6 +60,8 @@ export default function DinoTranslatorPage() {
   }, [isLoading]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (warningMessage) return;
+
     const text = e.target.value;
     const hasEnglish = /[a-zA-Z]/.test(text);
 
@@ -193,8 +195,9 @@ export default function DinoTranslatorPage() {
               <textarea
                 value={inputText}
                 onChange={handleInputChange}
+                disabled={!!warningMessage}
                 placeholder="متنت رو اینجا بنویس تا به دینیسیری تبدیلش کنیم..."
-                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-lg md:text-lg leading-relaxed font-medium"
+                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-lg md:text-xl leading-relaxed font-medium disabled:opacity-50"
               />
 
               <div className="flex justify-between items-center pt-3 border-t border-blue-800/60 mt-auto">
@@ -331,8 +334,13 @@ export default function DinoTranslatorPage() {
       {warningMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-slate-800 border-2 border-rose-500/60 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center gap-5 transition-transform duration-300 scale-100 animate-in zoom-in-95">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-3xl shadow-lg animate-bounce">
-              🦖
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shadow-lg animate-bounce overflow-hidden">
+              <Image
+                alt="logo"
+                src={Logo}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
 
             <div className="space-y-2">
