@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
+
+const farBassam = localFont({
+  src: "../public/font/Far_Casablanca.ttf",
+  variable: "--font-far-bassam",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Dinisir Language",
@@ -12,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa">
-      <body>{children}</body>
+    <html lang="fa" dir="rtl" className={farBassam.variable}>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }
