@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 
 const farBassam = localFont({
-  src: "../public/font/Far_Casablanca.ttf",
+  src: "../public/font/Gandom.ttf",
   variable: "--font-far-bassam",
   display: "swap",
 });

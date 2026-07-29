@@ -12,6 +12,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import StarBurst from "@/components/StarBurst";
+import Image from "next/image";
+import Logo from "@/public/logo/dinisir-head.jpg";
 
 const SUGGESTED_TEXTS = [
   "سلام چطوری خوبی؟ چه خبر؟",
@@ -137,8 +139,8 @@ export default function DinoTranslatorPage() {
       <div className="fixed inset-0 pointer-events-none z-0">
         <StarBurst
           color="#22d3ee"
-          starCount={2000}
-          speed={10}
+          starCount={1000}
+          speed={8}
           opacity={40}
           centerX={50}
           centerY={30}
@@ -152,8 +154,13 @@ export default function DinoTranslatorPage() {
       <header className="relative z-10 border-b border-blue-500/30 bg-slate-800/90 backdrop-blur-md px-4 py-3 md:py-4 md:px-8 shadow-md">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-2xl bg-linear-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xl md:text-2xl shadow-lg shadow-blue-900/40 border border-cyan-300/40 hover:rotate-12 transition-transform duration-300">
-              🦖
+            <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40 border border-cyan-300/40 hover:rotate-12 transition-transform duration-300 overflow-hidden">
+              <Image
+                alt="logo"
+                src={Logo}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
             <div className="min-w-0">
               <h1 className="text-lg md:text-2xl font-black tracking-tight bg-linear-to-r from-white via-sky-200 to-cyan-300 bg-clip-text text-transparent truncate">
@@ -176,7 +183,7 @@ export default function DinoTranslatorPage() {
         <div className="bg-slate-800/70 border border-sky-500/30 rounded-3xl p-5 md:p-7 shadow-xl backdrop-blur-xl transition-all duration-300 hover:border-sky-500/50">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/30 transition-all duration-300">
-              <div className="flex items-center justify-between text-sm text-cyan-200 mb-3 font-bold">
+              <div className="flex items-center justify-between text-base text-cyan-200 mb-3 font-bold">
                 <span>متن آدمیزادی بینیویس</span>
                 <span className="bg-blue-900/80 text-cyan-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-cyan-400/40 transition-transform active:scale-95">
                   {inputText.length} کاراکتر
@@ -187,7 +194,7 @@ export default function DinoTranslatorPage() {
                 value={inputText}
                 onChange={handleInputChange}
                 placeholder="متنت رو اینجا بنویس تا به دینیسیری تبدیلش کنیم..."
-                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-lg md:text-xl leading-relaxed font-medium"
+                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-lg md:text-lg leading-relaxed font-medium"
               />
 
               <div className="flex justify-between items-center pt-3 border-t border-blue-800/60 mt-auto">
@@ -228,7 +235,7 @@ export default function DinoTranslatorPage() {
             <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 relative overflow-hidden">
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="font-bold text-cyan-300 text-base">
-                  خروجی دینیسیری
+                  خروجی دینیسیری بیگیر
                 </span>
                 {translatedText && (
                   <button
