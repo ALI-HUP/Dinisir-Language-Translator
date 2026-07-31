@@ -39,6 +39,7 @@ const ENGLISH_WARNINGS = [
 export default function DinoTranslatorPage() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [history, setHistory] = useState<{ source: string; result: string }[]>(
@@ -94,6 +95,10 @@ export default function DinoTranslatorPage() {
     }
 
     setIsLoading(true);
+    setTranslatedText("");
+    setIsCopied(false);
+    setErrorMessage("");
+
     try {
       const response = await fetch("/api/translate", {
         method: "POST",
@@ -112,11 +117,11 @@ export default function DinoTranslatorPage() {
           ...prev.slice(0, 4),
         ]);
       } else {
-        setTranslatedText("به خطا خوردیم، تا چشمت درآد! دوباره امتحان کن.");
+        setErrorMessage("به خطا خوردیم، تا چشمت درآد! دوباره امتحان کن.");
       }
     } catch (error) {
       console.error(error);
-      setTranslatedText("خطا در ارتباط با سرور دایناسوری...");
+      setErrorMessage("خطا در ارتباط با سرور دایناسوری...");
     } finally {
       setIsLoading(false);
     }
@@ -237,11 +242,12 @@ export default function DinoTranslatorPage() {
             </div>
 
             <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between gap-۱ text-sm mb-3">
+              <div className="flex items-center justify-between gap-1 text-sm mb-3">
                 <span className="font-bold text-cyan-300 text-sm md:text-base truncate">
                   خروجی دینیسیری بیگیر
                 </span>
-                {translatedText && (
+
+                {translatedText && !isLoading && !errorMessage && (
                   <button
                     onClick={handleCopy}
                     className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap"
@@ -271,6 +277,10 @@ export default function DinoTranslatorPage() {
                         ? "در حال پردازش آواهای عصر ژوراسیک..."
                         : "در حال تبدیل به زبان دینیسیری..."}
                     </span>
+                  </div>
+                ) : errorMessage ? (
+                  <div className="h-full flex items-center justify-center text-rose-400 text-base font-medium text-center">
+                    {errorMessage}
                   </div>
                 ) : translatedText ? (
                   <span className="inline-block animate-fade-in">
