@@ -16,15 +16,16 @@ import Image from "next/image";
 import Logo from "@/public/logo/dinisir-head.jpg";
 
 const SUGGESTED_TEXTS = [
-  "سلام چطوری خوبی؟ چه خبر؟",
+  "سلام چطوری؟ خوبی؟",
   "سلام رئیس، پروژه تموم شد و آماده تحویله!",
-  "دلم برات تنگ شده بود، کی میای همدیگه رو ببینیم؟",
-  "من عقده‌ام کثافت؟؟؟",
-  "امروز رفتم مغازه خرید کنم، فروشنده گفت جنسا گرون شده!",
-  "خواهیم دید چه خواهد شد!!",
-  "جات خالی رفتیم شمال، هوا عالی بود و کلی خوش گذشت.",
+  "دلم برات تنگ شده، کی میای همدیگه رو ببینیم؟",
+  "من عقده‌ایم کثافت؟؟؟",
   "بخشش لازم نیست، اعدامش کنید!",
+  "جات خالی رفتیم شمال، هوا عالی بود و خیلی خوش گذشت.",
+  "خواهیم دید چه خواهد شد!!",
+  "سلام! دختری؟؟",
   "اون ممه رو لولو برد...",
+  "این زبان دیسینیر هست،‌مسخره هم خودتی!!!",
 ];
 
 const ENGLISH_WARNINGS = [
@@ -111,11 +112,11 @@ export default function DinoTranslatorPage() {
           ...prev.slice(0, 4),
         ]);
       } else {
-        setTranslatedText("خطا در ترجمه! دوباره تلاش کن.");
+        setTranslatedText("به خطا خوردیم، تا چشمت درآد! دوباره امتحان کن.");
       }
     } catch (error) {
       console.error(error);
-      setTranslatedText("خطا در ارتباط با سرور.");
+      setTranslatedText("خطا در ارتباط با سرور دایناسوری...");
     } finally {
       setIsLoading(false);
     }
@@ -236,19 +237,19 @@ export default function DinoTranslatorPage() {
             </div>
 
             <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between text-sm mb-3">
-                <span className="font-bold text-cyan-300 text-base">
+              <div className="flex items-center justify-between gap-۱ text-sm mb-3">
+                <span className="font-bold text-cyan-300 text-sm md:text-base truncate">
                   خروجی دینیسیری بیگیر
                 </span>
                 {translatedText && (
                   <button
                     onClick={handleCopy}
-                    className="flex items-center gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-3 py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90"
+                    className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap"
                     title="کپی متن"
                   >
                     {isCopied ? (
                       <>
-                        <Check className="w-4 h-4 text-cyan-300 animate-bounce" />
+                        <Check className="w-4 h-4 text-cyan-300" />
                         <span className="text-cyan-300">کپی شد! خب بعدش؟</span>
                       </>
                     ) : (
@@ -288,7 +289,7 @@ export default function DinoTranslatorPage() {
         <div className="bg-slate-800/70 p-5 rounded-2xl border border-sky-500/30 backdrop-blur-sm shadow-md">
           <div className="text-sm text-cyan-300 mb-3 font-bold flex items-center gap-2">
             <Lightbulb className="w-4 h-4 text-cyan-300 animate-pulse" />
-            متن‌های پیشنهادی (برای تست کلیک کن)
+            متن‌های پیشنهادی دینیسیری:
           </div>
           <div className="flex flex-wrap gap-2.5">
             {SUGGESTED_TEXTS.map((text, idx) => (
