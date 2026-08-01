@@ -52,48 +52,86 @@ export default function DinoTranslatorPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handlePlayAudio = async () => {
-    if (!translatedText || isPlaying) return;
+  const handlePlayAudio = () => {
+    if (!translatedText || isLoading) return;
 
-    try {
-      setIsPlaying(true);
-
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: translatedText }),
-      });
-
-      if (!response.ok) {
-        throw new Error("پاسخ ناموفق از API دریافت شد");
-      }
-
-      const blob = await response.blob();
-      const audioUrl = URL.createObjectURL(blob);
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.onerror = () => {
-        console.error("خطا در بارگیری فایل صوتی");
-        setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      await audio.play();
-    } catch (error) {
-      console.error("خطا در اجرای ویس:", error);
-      setIsPlaying(false);
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      alert("مرورگر شما از قابلیت پخش صوتی پشتیبانی نمی‌کند.");
+      return;
     }
+
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const faToEnMap: Record<string, string> = {
+      آ: "a",
+      ا: "a",
+      ب: "b",
+      پ: "p",
+      ت: "t",
+      ث: "s",
+      ج: "j",
+      چ: "ch",
+      ح: "h",
+      خ: "kh",
+      د: "d",
+      ذ: "z",
+      ر: "r",
+      ز: "z",
+      ژ: "zh",
+      س: "s",
+      ش: "sh",
+      ص: "s",
+      ض: "z",
+      ط: "t",
+      ظ: "z",
+      ع: "a",
+      غ: "gh",
+      ف: "f",
+      ق: "gh",
+      ک: "k",
+      گ: "g",
+      ل: "l",
+      م: "m",
+      ن: "n",
+      و: "v",
+      ه: "h",
+      ی: "i",
+      ئ: "e",
+      ؤ: "o",
+    };
+
+    const latinText = translatedText
+      .split("")
+      .map((char) => faToEnMap[char] || char)
+      .join("");
+
+    const utterance = new SpeechSynthesisUtterance(latinText);
+    utterance.lang = "en-US";
+    utterance.rate = 0.8;
+    utterance.pitch = 0.95;
+
+    utterance.onstart = () => {
+      setIsPlaying(true);
+    };
+
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+
+    utterance.onerror = (e) => {
+      if (e.error !== "interrupted" && e.error !== "canceled") {
+        console.error("خطا در پخش صوت مرورگر:", e);
+      }
+      setIsPlaying(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   const [loadingStep, setLoadingStep] = useState(0);
@@ -257,7 +295,7 @@ export default function DinoTranslatorPage() {
               />
 
               <div className="flex justify-between items-center pt-3 border-t border-blue-800/60 mt-auto">
-                {inputText && (
+                {inputText ? (
                   <button
                     onClick={() => {
                       setInputText("");
@@ -268,6 +306,8 @@ export default function DinoTranslatorPage() {
                     <Trash2 className="w-4 h-4" />
                     <span>پاک کردن</span>
                   </button>
+                ) : (
+                  <div />
                 )}
                 <button
                   onClick={() => handleTranslate()}
@@ -298,38 +338,23 @@ export default function DinoTranslatorPage() {
                 </span>
 
                 {translatedText && !isLoading && !errorMessage && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={handlePlayAudio}
-                      disabled={isPlaying || !translatedText}
-                      className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap disabled:opacity-50"
-                      title="پخش صوتی"
-                    >
-                      <Volume2
-                        className={`w-4 h-4 ${isPlaying ? "animate-bounce text-cyan-300" : ""}`}
-                      />
-                      <span>{isPlaying ? "در حال پخش..." : "پخش"}</span>
-                    </button>
-                    <button
-                      onClick={handleCopy}
-                      className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap"
-                      title="کپی متن"
-                    >
-                      {isCopied ? (
-                        <>
-                          <Check className="w-4 h-4 text-cyan-300" />
-                          <span className="text-cyan-300">
-                            کپی شد! خب بعدش؟
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          <span>کپی</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleCopy}
+                    className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap"
+                    title="کپی متن"
+                  >
+                    {isCopied ? (
+                      <>
+                        <Check className="w-4 h-4 text-cyan-300" />
+                        <span className="text-cyan-300">کپی شد! خب بعدش؟</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>کپی</span>
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
 
@@ -356,6 +381,34 @@ export default function DinoTranslatorPage() {
                     نتیجه ترجمه اینجا نشون داده میشه...
                   </div>
                 )}
+              </div>
+
+              <div className="flex flex-col items-end gap-1 border-t border-blue-800/60 pt-3 mt-auto">
+                <button
+                  onClick={handlePlayAudio}
+                  disabled={!translatedText || isLoading || !!errorMessage}
+                  className={`flex items-center gap-1.5 md:gap-2 font-black px-4 py-2.5 md:px-6 md:py-3 rounded-xl shadow-lg transition duration-300 active:scale-95 text-sm md:text-base cursor-pointer disabled:opacity-40 ${
+                    isPlaying
+                      ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/50"
+                      : "bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 shadow-cyan-900/50"
+                  }`}
+                >
+                  {isPlaying ? (
+                    <>
+                      <Square className="w-4 h-4 md:w-5 md:h-5 text-white fill-white animate-pulse" />
+                      <span>قطع کن این سم رو!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
+                      <span>پخش (خرابه ولی تو گوش کن)</span>
+                    </>
+                  )}
+                </button>
+
+                <span className="text-xs mt-1 text-slate-400 italic">
+                  لهجه خرابه؟ دایناسوره فک نداره، همینه که هست! 🦖
+                </span>
               </div>
             </div>
           </div>
