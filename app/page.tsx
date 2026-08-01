@@ -53,15 +53,7 @@ export default function DinoTranslatorPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlayAudio = async () => {
-    if (!translatedText || isLoading) return;
-
-    // اگر در حال پخش بود و دوباره کلیک شد، متوقفش کن
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      return;
-    }
+    if (!translatedText || isPlaying) return;
 
     try {
       setIsPlaying(true);
@@ -73,16 +65,10 @@ export default function DinoTranslatorPage() {
       });
 
       if (!response.ok) {
-        const errorMsg = await response.text();
-        console.error("پاسخ ناموفق سرور TTS:", errorMsg);
-        throw new Error(errorMsg || "خطا در دریافت فایل صوتی");
+        throw new Error("پاسخ ناموفق از API دریافت شد");
       }
 
       const blob = await response.blob();
-      if (blob.size === 0) {
-        throw new Error("فایل صوتی دریافت شده خالی است.");
-      }
-
       const audioUrl = URL.createObjectURL(blob);
 
       if (audioRef.current) {
@@ -91,22 +77,21 @@ export default function DinoTranslatorPage() {
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
-      audio.playbackRate = 0.9;
 
       audio.onended = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
       };
 
-      audio.onerror = (e) => {
-        console.error("خطا در پخش فایل صوتی:", e);
+      audio.onerror = () => {
+        console.error("خطا در بارگیری فایل صوتی");
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
       };
 
       await audio.play();
     } catch (error) {
-      console.error("خطا در اجرا یا پخش صوت:", error);
+      console.error("خطا در اجرای ویس:", error);
       setIsPlaying(false);
     }
   };
@@ -316,22 +301,15 @@ export default function DinoTranslatorPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={handlePlayAudio}
-                      className="flex items-center gap-1.5 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-[10px] sm:text-xs font-bold border border-cyan-500/40 cursor-pointer active:scale-90 whitespace-nowrap"
-                      title={isPlaying ? "توقف" : "پخش آوا"}
+                      disabled={isPlaying || !translatedText}
+                      className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap disabled:opacity-50"
+                      title="پخش صوتی"
                     >
-                      {isPlaying ? (
-                        <>
-                          <Square className="w-3.5 h-3.5 md:w-4 md:h-4 text-rose-400 fill-rose-400 animate-pulse shrink-0" />
-                          <span className="text-rose-400">قطع کن!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
-                          <span>پخش آوا</span>
-                        </>
-                      )}
+                      <Volume2
+                        className={`w-4 h-4 ${isPlaying ? "animate-bounce text-cyan-300" : ""}`}
+                      />
+                      <span>{isPlaying ? "در حال پخش..." : "پخش"}</span>
                     </button>
-
                     <button
                       onClick={handleCopy}
                       className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap"
