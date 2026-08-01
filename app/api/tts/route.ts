@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+// @ts-ignore
+import gTTS from "gtts";
 
 export async function POST(req: Request) {
   try {
@@ -16,38 +18,32 @@ export async function POST(req: Request) {
       return new NextResponse("متن معتبر نیست.", { status: 400 });
     }
 
-    // استفاده از اندپوینت استاندارد gTTS با انکودینگ انحصاری
-    const encodedText = encodeURIComponent(cleanText);
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=fa&total=1&idx=0&textlen=${cleanText.length}&client=tw-ob&prev=input`;
+    // ساخت استریم صوتی با زبان فارسی
+    const gtts = new gTTS(cleanText, "fa");
 
-    const response = await fetch(ttsUrl, {
-      method: "GET",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "*/*",
-        "Accept-Language": "fa,en-US;q=0.9,en;q=0.8",
-      },
-      cache: "no-store",
+    // تبدیل استریم به Buffer
+    const audioBuffer = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const stream = gtts.stream();
+
+      stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
+      stream.on("error", (err: any) => reject(err));
     });
 
-    if (!response.ok) {
-      console.error("Google TTS Blocked Error Status:", response.status);
-      return new NextResponse("خطا در سرویس صوتی گوگل", { status: response.status });
-    }
+    // 👈 تبدیل Buffer به Uint8Array برای رفع ارور تایپ‌اسکریپت
+    const uint8Array = new Uint8Array(audioBuffer);
 
-    const arrayBuffer = await response.arrayBuffer();
-
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(uint8Array, {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",
-        "Content-Length": arrayBuffer.byteLength.toString(),
+        "Content-Length": uint8Array.length.toString(),
         "Cache-Control": "public, max-age=3600",
       },
     });
   } catch (error) {
-    console.error("TTS Route Exception:", error);
-    return new NextResponse("خطای داخلی سرور", { status: 500 });
+    console.error("TTS Route Error:", error);
+    return new NextResponse("خطای داخلی سرور در تولید صوت", { status: 500 });
   }
 }
