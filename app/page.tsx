@@ -278,10 +278,12 @@ export default function DinoTranslatorPage() {
       <main className="relative z-10 max-w-4xl mx-auto w-full px-4 py-6 md:py-8 grow flex flex-col gap-6">
         <div className="bg-slate-800/70 border border-sky-500/30 rounded-3xl p-5 md:p-7 shadow-xl backdrop-blur-xl transition-all duration-300 hover:border-sky-500/50">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/30 transition-all duration-300">
-              <div className="flex items-center justify-between text-base text-cyan-200 mb-3 font-bold">
-                <span>متن آدمیزادی بینیویس</span>
-                <span className="bg-blue-900/80 text-cyan-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-cyan-400/40 transition-transform active:scale-95">
+            <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-4 md:p-5 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/30 transition-all duration-300">
+              <div className="flex items-center justify-between text-cyan-200 mb-3 font-bold">
+                <span className="text-sm md:text-base">
+                  متن آدمیزادی بینیویس
+                </span>
+                <span className="bg-blue-900/80 text-cyan-200 px-2.5 py-1 rounded-xl text-xs font-bold border border-cyan-400/30 shrink-0">
                   {inputText.length} کاراکتر
                 </span>
               </div>
@@ -291,28 +293,34 @@ export default function DinoTranslatorPage() {
                 onChange={handleInputChange}
                 disabled={!!warningMessage}
                 placeholder="متنت رو اینجا بنویس تا به دینیسیری تبدیلش کنیم..."
-                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-lg md:text-xl leading-relaxed font-medium disabled:opacity-50"
+                className="w-full h-40 md:h-48 bg-transparent text-white placeholder-slate-400 focus:outline-none resize-none text-base leading-relaxed font-medium disabled:opacity-50"
               />
 
-              <div className="flex justify-between items-center pt-3 border-t border-blue-800/60 mt-auto">
-                {inputText ? (
+              <div className="flex items-center gap-2 pt-3 mt-auto">
+                <div
+                  className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center shrink-0 ${
+                    inputText
+                      ? "max-w-xs opacity-100 scale-100 pointer-events-auto"
+                      : "max-w-0 opacity-0 scale-95 pointer-events-none -mr-2"
+                  }`}
+                >
                   <button
                     onClick={() => {
                       setInputText("");
                       setTranslatedText("");
                     }}
-                    className="text-sm text-slate-300 hover:text-rose-400 transition flex items-center gap-1 font-semibold cursor-pointer active:scale-90"
+                    className="flex items-center justify-center gap-1 bg-rose-950/50 hover:bg-rose-900/80 text-rose-300 border border-rose-500/30 px-3 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-bold transition cursor-pointer active:scale-95 whitespace-nowrap"
+                    title="پاک کردن متن"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    <span>پاک کردن</span>
+                    <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span className="hidden sm:inline">پاک کردن</span>
                   </button>
-                ) : (
-                  <div />
-                )}
+                </div>
+
                 <button
                   onClick={() => handleTranslate()}
                   disabled={isLoading || !inputText.trim()}
-                  className={`mr-auto flex items-center gap-1.5 md:gap-2 bg-linear-to-r from-blue-500 to-cyan-400 hover:from-blue-400 hover:to-cyan-300 disabled:opacity-40 text-slate-950 font-black px-4 py-2.5 md:px-6 md:py-3 rounded-xl shadow-lg shadow-blue-900/50 transition duration-300 active:scale-95 text-sm md:text-base cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 bg-linear-to-r from-blue-500 to-cyan-400 hover:from-blue-400 hover:to-cyan-300 disabled:opacity-40 text-slate-950 font-black py-2.5 md:py-3 rounded-xl shadow-lg shadow-blue-900/50 transition-all duration-300 active:scale-95 text-sm md:text-base cursor-pointer ${
                     inputText.trim() && !isLoading ? "animate-pulse" : ""
                   }`}
                 >
@@ -331,34 +339,14 @@ export default function DinoTranslatorPage() {
               </div>
             </div>
 
-            <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between gap-2 text-sm mb-3">
-                <span className="font-bold text-cyan-300 text-sm md:text-base truncate">
+            <div className="flex flex-col bg-slate-900/80 border border-blue-700/50 rounded-2xl p-4 md:p-5 relative overflow-hidden">
+              <div className="flex items-center justify-between text-cyan-300 mb-3 font-bold">
+                <span className="text-sm md:text-base">
                   خروجی دینیسیری بیگیر
                 </span>
-
-                {translatedText && !isLoading && !errorMessage && (
-                  <button
-                    onClick={handleCopy}
-                    className="shrink-0 flex items-center gap-1 md:gap-1.5 bg-blue-900/80 hover:bg-blue-800 text-white px-2.5 py-1 md:px-3 md:py-1.5 rounded-xl transition text-xs font-bold border border-cyan-400/40 cursor-pointer active:scale-90 whitespace-nowrap"
-                    title="کپی متن"
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="w-4 h-4 text-cyan-300" />
-                        <span className="text-cyan-300">کپی شد! خب بعدش؟</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span>کپی</span>
-                      </>
-                    )}
-                  </button>
-                )}
               </div>
 
-              <div className="w-full h-40 md:h-48 overflow-y-auto text-cyan-200 text-xl md:text-2xl font-bold leading-relaxed whitespace-pre-wrap">
+              <div className="w-full h-40 md:h-48 overflow-y-auto text-cyan-200 text-lg md:text-2xl font-bold leading-relaxed whitespace-pre-wrap">
                 {isLoading ? (
                   <div className="h-full flex flex-col items-center justify-center text-cyan-200 gap-3 transition-all duration-300">
                     <div className="text-4xl animate-bounce">🦖</div>
@@ -377,38 +365,67 @@ export default function DinoTranslatorPage() {
                     {translatedText}
                   </span>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-base italic font-normal">
+                  <div className="h-full flex text-slate-400 text-base italic font-normal">
                     نتیجه ترجمه اینجا نشون داده میشه...
                   </div>
                 )}
               </div>
 
-              <div className="flex flex-col items-end gap-1 border-t border-blue-800/60 pt-3 mt-auto">
-                <button
-                  onClick={handlePlayAudio}
-                  disabled={!translatedText || isLoading || !!errorMessage}
-                  className={`flex items-center gap-1.5 md:gap-2 font-black px-4 py-2.5 md:px-6 md:py-3 rounded-xl shadow-lg transition duration-300 active:scale-95 text-sm md:text-base cursor-pointer disabled:opacity-40 ${
-                    isPlaying
-                      ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/50"
-                      : "bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 shadow-cyan-900/50"
-                  }`}
-                >
-                  {isPlaying ? (
-                    <>
-                      <Square className="w-4 h-4 md:w-5 md:h-5 text-white fill-white animate-pulse" />
-                      <span>قطع کن این سم رو!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
-                      <span>پخش (خرابه ولی تو گوش کن)</span>
-                    </>
-                  )}
-                </button>
-
-                <span className="text-xs mt-1 text-slate-400 italic">
+              <div className="flex flex-col pt-3 mt-auto">
+                <span className="text-[11px] mb-1 text-slate-400 italic text-center truncate">
                   لهجه خرابه؟ دایناسوره فک نداره، همینه که هست! 🦖
                 </span>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center shrink-0 ${
+                      translatedText && !isLoading && !errorMessage
+                        ? "max-w-xs opacity-100 scale-100 pointer-events-auto"
+                        : "max-w-0 opacity-0 scale-95 pointer-events-none -mr-2"
+                    }`}
+                  >
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center justify-center gap-1 bg-blue-900/80 hover:bg-blue-800 text-white px-3 py-2.5 md:py-3 rounded-xl transition-all duration-200 text-xs md:text-sm font-bold border border-cyan-400/40 cursor-pointer active:scale-95 whitespace-nowrap"
+                      title="کپی متن"
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-4 h-4 text-cyan-300 shrink-0 animate-in zoom-in-50 duration-200" />
+                          <span className="text-cyan-300 animate-in fade-in duration-200">
+                            کپی شد!
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 text-cyan-200 shrink-0" />
+                          <span className="hidden sm:inline">کپی</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handlePlayAudio}
+                    disabled={!translatedText || isLoading || !!errorMessage}
+                    className={`flex-1 flex items-center justify-center gap-2 font-black py-2.5 md:py-3 rounded-xl shadow-lg transition-all duration-300 active:scale-95 text-sm md:text-base cursor-pointer disabled:opacity-40 ${
+                      isPlaying
+                        ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/50"
+                        : "bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 shadow-cyan-900/50"
+                    }`}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Square className="w-4 h-4 md:w-5 md:h-5 text-white fill-white animate-pulse" />
+                        <span>قطع کن این سم رو!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-4 h-4 md:w-5 md:h-5" />
+                        <span>پخش آوای سَمی</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
